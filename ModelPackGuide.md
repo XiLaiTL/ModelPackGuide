@@ -1,18 +1,51 @@
 # **从模型到模型包——让你的模型加入游戏**
 
+## **开始前的建议**
+
+在任何时候，WIKI都里的内容非常有参考价值。如果遇到了任何拿不准或者不太理解的部分，可以前往WIKI的相应页面进行参考。本文在此提供[WIKI的模型词条页面](https://minecraft.fandom.com/zh/wiki/模型)。
+
+如果WIKI的内容难以理解，一些资源包制作教程可能会比较有用。本文在此提供[森罗万象](http://sqwatermark.com/resguide)作为资源包制作教程参照。
+
 ## **原版Minecraft实现拓展**
 
 ### **拓展物品模型**
 
-通过物品谓词Damage或者CustomModelData拓展物品模型。
+在物品模型中，可以使用overrides属性来指定特殊情况下使用的备选模型。overrides可以使用许多物品标签谓词来判断各种情况，具体的标签列表可以在文件开头的WIKI模型词条内找到。在制作模型包时，使用的比较多的标签是damage与custom_model_data。
+
+当overrides列表内有多个被满足的条件时，游戏会采用最靠近末尾的覆写内容。
+
+例如，在以下模型文件中，当damage的值为0时，会调用指定模型1作为物品模型；而当damage为0且custom_model_data也为0时，则会调用指定模型2作为物品模型。
+
+```json
+{
+    "模型其他内容":"模型其他内容",
+    "overrides": [
+        {
+            "predicate": {
+                "damage": 0
+            },
+            "model": "指定模型1"
+        },
+        {
+            "predicate": {
+                "damage": 0,
+                "custom_model_data": 0
+            },
+            "model": "指定模型2"
+        }
+    ]
+}
+```
+
+以下是更多来自资源包制作教程的参照：
 
 [物品标签damage | 森罗万象](http://sqwatermark.com/resguide/vanilla/model/item_tags.html#damage用法)
 
-[物品标签custom-model-data | 森罗万象 ](http://sqwatermark.com/resguide/vanilla/model/item_tags.html#custom-model-data用法)
+[物品标签custom_model_data | 森罗万象 ](http://sqwatermark.com/resguide/vanilla/model/item_tags.html#custom-model-data用法)
 
 #### **通过展示框展示**
 
-在Blockbench中完成模型后，可以点击右上角的“显示调整”，然后在左边的槽位中选择物品展示框，调整模型的相对位置。也可以将模型的位置调整至方块“内部”，这样在屏障方块的配合下，可以让模型拥有1X1X1碰撞箱。
+在Blockbench中完成模型后，可以点击右上角的“显示调整”，然后在左边的槽位中选择物品展示框，调整模型的相对位置。也可以将模型的位置调整至方块“内部”，这样在屏障方块的配合下，可以让模型拥有1X1X1的碰撞箱。
 
 物品展示框拥有可以通过命令获取的“透明”的形式，以减少使用时对模型观感的影响，而新版的荧光展示框还可以避免模型被覆盖时变黑。
 
