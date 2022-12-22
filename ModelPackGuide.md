@@ -18,7 +18,7 @@
 
 ```json
 {
-    "模型其他内容":"模型其他内容",
+    "模型其他内容": "模型其他内容",
     "overrides": [
         {
             "predicate": {
@@ -67,6 +67,8 @@ give @p minecraft:armor_stand{EntityTag:{ShowArms:1b}}
 
 此外，还可以通过向EntityTag内添加Small属性来获得“幼年”盔甲架的效果。
 
+BlockBench的“显示预览”窗口可以预览模型在盔甲架头部与手部的效果，预先在BlockBench内进行调整可以避免游戏内发现效果不好后反复修改并重载资源包带来的不必要的时间浪费。
+
 利用盔甲架的骑乘可以制作堆叠的模型。
 
 其他生物如村民头部、僵尸手部等也可以展示物品模型。
@@ -82,6 +84,8 @@ setblock ~ ~ ~ minecraft:spawner{MaxNearbyEntities:0,RequiredPlayerRange:0,Spawn
 
 
 #### **头部展示**
+
+在游戏内加载之前，可以在BlockBench的“显示预览”窗口内预览模型放在头盔栏的效果。
 
 为南瓜头的物品模型添加不同custom_model_data下的overrides覆盖模型，然后使用命令给予玩家包含特定custom_model_data的南瓜头即可直接穿戴展示物品模型。
 
@@ -117,9 +121,104 @@ give @a minecraft:bat_spawn_egg{EntityTag:{id:"minecraft:armor_stand",ArmorItems
 
 也可以修改一些原版地形没有用到的方块，或者生存中无法合成的方块用于拓展。例如彩色带釉陶瓦（带有4个朝向，共16个方块，如果设计无朝向模型可以设计4*16种），以及生存中不存在的石化橡木台阶（3个状态和2个含水状态）不过这样拓展的模型毕竟数量有限，而且遵循方块的渲染规则（大部分方块纹理透明部分会被填充），且除了部分的半透明方块（冰、霜冰、下界传送门、染色玻璃与遮光玻璃、黏液块、蜂蜜块、气泡柱）可以使用半透明纹理外，其他的都受到光照遮蔽的影响，且接受面剔除。
 
+特别注意，面剔除是按照游戏内置的方式来进行的，并且全部以原版模型作为参照。例如即使把按钮的模型改成完整方块的模型，除去附着的方向外其他方向均无法触发面剔除。这意味着自制面剔除必须以原版模型作为参考，否则在不完整方块上可能会导致意料之外的剔除或者未剔除。
+
 #### **利用未使用的方块状态**
 
 可以使用一些除了调试棒或者命令才能获得的方块作为我们模型的载体。可以参考[WIKI内的原版未使用方块状态组合](https://minecraft.fandom.com/zh/wiki/Java%E7%89%88%E6%9C%AA%E4%BD%BF%E7%94%A8%E7%89%B9%E6%80%A7#.E6.96.B9.E5.9D.97.E7.8A.B6.E6.80.81.E7.BB.84.E5.90.88)，但是需要注意一些方块（例如各个方向都为false的藤蔓与发光地衣）没有方块选择框，使用调试棒或者命令生成之后无法再用调试棒更改，必须要改变周围方块或者使用命令才能改变其方块状态。
+
+需要注意，对于大部分拥有未使用方块状态组合的方块，其原版的方块状态文件使用的是multipart格式，这意味着除非所修改的目标方块状态组合在原版就不会调用任何模型，否则会出现一些原版方块状态文件调用的模型组件。以1.16往上的墙类方块为例，两个相邻的朝向的方块状态为low或者tall，但是方块状态up为false的圆石墙在不作弊的情况下是无法获得的。这种情况下墙的模型会只有向两个不为none的水平方向延伸的墙体，而不会有中间的石柱；如果强行在multipart文件中添加特定情况调用的模型，会导致想调用的模型与两端墙体一起加载，有可能破坏模型本身的视觉效果。在这种情况下，就需要对原版的方块状态文件进行修改，来保证要调用目标模型时只有目标模型会被调用。
+
+例如，想要在圆石墙的north与east均为low，south与west均为none并且up为false时调用指定模型，我们就需要进行如下更改（长代码块警告）：
+
+```json
+{
+    "multipart": [
+        {
+            "此处省略其他未更改状态": "此处省略其他未更改状态"
+        }
+        {
+            "apply": {
+                "model": "minecraft:block/cobblestone_wall_side",
+                "uvlock": true
+            },
+            "when": {
+                "OR": [
+                    {
+                        "east": "tall|none",
+                        "north": "low",
+                        "south": "none",
+                        "west": "none",
+                        "up": "false"
+                    },
+                    {
+                        "east": "tall|low|none",
+                        "north": "low",
+                        "south": "tall|low|none",
+                        "west": "tall|low|none",
+                        "up": "true"
+                    },
+                    {
+                        "east": "tall|low|none",
+                        "north": "low",
+                        "south": "tall|low",
+                        "west": "tall|low",
+                        "up": "false"
+                    }
+                ]
+            }
+        },
+        {
+            "apply": {
+                "model": "minecraft:block/cobblestone_wall_side",
+                "uvlock": true,
+                "y": 90
+            },
+            "when": {
+                "OR": [
+                    {
+                        "east": "low",
+                        "north": "tall|none",
+                        "south": "none",
+                        "west": "none",
+                        "up": "false"
+                    },
+                    {
+                        "east": "low",
+                        "north": "tall|low|none",
+                        "south": "tall|low|none",
+                        "west": "tall|low|none",
+                        "up": "true"
+                    },
+                    {
+                        "east": "low",
+                        "north": "tall|low|none",
+                        "south": "tall|low",
+                        "west": "tall|low",
+                        "up": "false"
+                    }
+                ]
+            }
+        },
+        {
+            "apply": {
+                "model": "指定模型"
+            },
+            "when": {
+                "east": "low",
+                "north": "low",
+                "south": "none",
+                "west": "none",
+                "up": "false"
+            }
+        }
+    ]
+}
+```
+
+前两段更改是为了保证在我们指定的状态（north与east均为low，其他水平方向为none并且up为false）的情况下不调用原版模型影响到我们自己的模型，并且同时不影响其他状态下原版模型的显示；而第三段则是在指定状态下调用我们的模型。随着同一方块的原版未使用方块状态组合数量的提升，方块状态文件可能会更为复杂。
+
+而对于variants类型的方块状态文件则简单得多，我们只需要在使用我们指定的方块状态组合时会调用的原版模型处增加方块状态的判断就能够阻止原版模型的加载，然后再加上我们自定义的方块状态组合和对应的模型。例如，对于既在充水状态又在点燃状态下的营火，我们只需要在原版的方块状态文件里给调用点燃的营火的方块状态组合加上 `"waterlogged": false` 的限定，就能够自己指定燃烧又充水的营火的模型了。
 
 #### **拼接模型**
 
